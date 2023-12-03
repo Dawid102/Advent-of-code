@@ -17,6 +17,7 @@ public class Main {
         ArrayList<List<Integer>> values = new ArrayList<>();
         int i = 0;
         int score = 0;
+        int gearSum = 0;
         while (day3.hasNext()) {
             var data = day3.next();
             ArrayList<Integer> results = new ArrayList<>();
@@ -77,6 +78,43 @@ public class Main {
                         if (isHex(rightBottom)) {toAdd.add(getValue(rightBottom)+16*(k+1));}
                     }
                 }
+                // Part 2
+                if (ch == '*') {
+                    if (k > 0 && l > 0) {
+                        HashSet<Integer> gearParts = new HashSet<>();
+                        char leftTop = schem[k-1][l-1];
+                        char top = schem[k-1][l];
+                        char rightTop = schem[k-1][l+1];
+                        char left = schem[k][l-1];
+                        char right = schem[k][l+1];
+                        char leftBottom = schem[k+1][l-1];
+                        char bottom = schem[k+1][l];
+                        char rightBottom = schem[k+1][l+1];
+                        if (isHex(leftTop)) {gearParts.add(getValue(leftTop)+16*(k-1));}
+                        if (isHex(top)) {gearParts.add(getValue(top)+16*(k-1));}
+                        if (isHex(rightTop)) {gearParts.add(getValue(rightTop)+16*(k-1));}
+                        if (isHex(left)) {gearParts.add(getValue(left)+16*k);}
+                        if (isHex(right)) {gearParts.add(getValue(right)+16*k);}
+                        if (isHex(leftBottom)) {gearParts.add(getValue(leftBottom)+16*(k+1));}
+                        if (isHex(bottom)) {gearParts.add(getValue(bottom)+16*(k+1));}
+                        if (isHex(rightBottom)) {gearParts.add(getValue(rightBottom)+16*(k+1));}
+                        if (gearParts.size() == 2) {
+                            int gearA = gearParts.stream().toList().get(0);
+                            int gearB = gearParts.stream().toList().get(1);
+                            int i1 = gearA % 16;
+                            int i2 = (gearA - i1) / 16;
+                            try {
+                                int gearAA = values.get(i2).get(i1);
+                                int i1b = gearB % 16;
+                                int i2b = (gearB - i1b) / 16;
+                                int gearBB = values.get(i2b).get(i1b);
+                                gearSum += gearAA * gearBB;
+                            } catch (Exception e) {
+                            }
+
+                        }
+                    }
+                }
             }
         }
         System.out.println(toAdd);
@@ -90,6 +128,7 @@ public class Main {
             }
         }
         System.out.println("Score "+score);
+        System.out.println("Gear sum " + gearSum);
 
 //        System.out.println(values);
 //        System.out.println(Arrays.deepToString(schem));
