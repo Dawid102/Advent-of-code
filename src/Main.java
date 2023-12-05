@@ -7,7 +7,57 @@ public class Main {
     public static void main(String[] args) {
 //        day1();
 //        day2();
-        day3();
+//        day3();
+        day4();
+    }
+    private static void day4() {
+        long score = 0;
+        ArrayList<Integer> machesArr = new ArrayList<>();
+        Scanner day4 = getScanner("input/day_4.txt");
+        while (day4.hasNext()) {
+            int maches = 0;
+            var data = day4.nextLine();
+            var cardID = data.split(":")[0].substring(5).replaceAll(" ","");
+            var numbers = data.split(":")[1];
+            var winning = numbers.split("\\|")[0].trim().split(" ");
+            String num = numbers.split("\\|")[1]+" ";
+            for (String ch : winning) {
+                if (ch != "") {
+                    if (num.contains(String.valueOf(' '+ch+' '))) {
+//                        System.out.println(num + " contains "+ch);
+                        maches++;
+                    };
+                }
+            }
+            machesArr.add(Integer.parseInt(cardID)-1 ,maches);
+            int score2;
+            if (maches > 0) {
+                score2 = (int) Math.pow(2, (maches - 1));
+            } else { score2 = 0; }
+//            System.out.println(maches + " " + score2);
+            score += (long) score2;
+        }
+        System.out.println(Arrays.deepToString(new ArrayList[]{machesArr}));
+        // Part 2
+//        ArrayList<Integer> numOfCard = new ArrayList<>(250);
+        int numOfCards[] = Arrays.stream(new int[machesArr.size()]).map(a -> a = 1).toArray();
+        System.out.println(Arrays.toString(numOfCards));
+        for (int k = 0; k < machesArr.size(); k++) {
+            int maches = machesArr.get(k);
+//            int maches = numOfCards[k];
+            System.out.println(maches + " " + k);
+//            numOfCard.add(k, 1);
+            if (maches > 0) {
+                for (int i = 1; i < (maches+1); i++) {
+                        numOfCards[k+i] += numOfCards[k];
+                }
+            }
+        }
+        long sum = Arrays.stream(numOfCards).sum();
+
+        System.out.println("Sum "+sum);
+
+        System.out.println(score);
     }
 
     private static void day3() {
