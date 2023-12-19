@@ -1,15 +1,311 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public class Main {
     public static void main(String[] args) {
 //        day1();
 //        day2();
 //        day3();
-        day4();
+//        day4();
+//        day5(); TODO:
+        day6();
     }
+
+    private static void day6() {
+        Scanner day6 = getScanner("input/day_6.txt");
+        ArrayList<Integer> waysToBeat = new ArrayList<>();
+        String data = day6.nextLine();
+        int[] time = Arrays.stream(data.substring(5).strip().split(" ")).filter(v -> v != "").mapToInt(Integer::parseInt).toArray();
+        String  timeSt = Arrays.stream(data.substring(5).strip().split(" ")).filter(v -> v != "").collect(Collectors.joining());
+        long time2 = Long.parseLong(timeSt);
+        String data2 = day6.nextLine();
+        int[] dist = Arrays.stream(data2.substring(10).strip().split(" ")).filter(v -> v != "").mapToInt(Integer::parseInt).toArray();
+        long dist2 = Long.parseLong(Arrays.stream(data2.substring(10).strip().split(" ")).filter(v -> v != "").collect(Collectors.joining()));
+        System.out.println(Arrays.toString(dist));
+        System.out.println(dist2);
+        System.out.println(Arrays.toString(time));
+        System.out.println(time2);
+        for (int i = 0; i < time.length; i++) {
+            int score = 0;
+            int timeI = time[i];
+            int distI = dist[i];
+            for (int j = 0; j < timeI; j++) {
+                int remainingTime = timeI-j;
+                if (remainingTime * j > distI) {
+                    score++;
+                }
+            }
+            waysToBeat.add(score);
+        }
+        int score2 = 0;
+        for (int i = 0; i < time2; i++) {
+            long remaining = time2-i;
+            if (remaining * i > dist2) {
+                score2++;
+            }
+        }
+//        System.out.println(waysToBeat);
+        int multi = 1;
+        for (int a : waysToBeat) {
+            multi *= a;
+        }
+        System.out.println(multi);
+        System.out.println(score2);
+    }
+
+    private static void day5() {
+        Scanner day5 = getScanner("input/day_5.txt");
+        ArrayList<ArrayList<ArrayTo>> arrayTo = new ArrayList<>();
+//                                     Type  Id in seeds
+        // Part 1
+        long[][] seedToLocation = new long[8][20];
+        String[] seeds = null;
+        int mode = 0;
+        while (day5.hasNext()) {
+            String data = day5.nextLine();
+            if (data == "") continue;
+            if (data.contains(":")) {
+                if (data.startsWith("seeds")) {
+                    for (long[] longs : seedToLocation) {
+                        Arrays.fill(longs, -1);
+                    }
+                    seeds = data.split(":")[1].trim().split(" ");
+                    String[] finalSeeds = seeds;
+                    var seedsAmount = IntStream.range(0, seeds.length)
+                            .filter(i -> (i % 2) == 1)
+                            .mapToObj(i -> finalSeeds[i])
+                            .mapToInt(Integer::parseInt);
+                    var seeds3 = IntStream.range(0, seeds.length)
+                            .filter(i -> (i % 2) == 0)
+                            .mapToObj(i -> finalSeeds[i])
+                            .mapToLong(Long::parseLong);
+                    ArrayList<ArrayTo> array = new ArrayList<>();
+                    int i = 0;
+                    for (long a : seeds3.toArray()) {
+                        array.add(new ArrayTo(a, a, Arrays.stream(seeds).mapToLong(Long::parseLong).toArray()[i*2+1]));
+                        i++;
+                    }
+                    arrayTo.add(array);
+
+//                    System.out.println(Arrays.toString(seeds));
+                    System.out.println(seedsAmount.sum());
+                    seedToLocation[0] = Arrays.stream(seeds).mapToLong(Long::parseLong).toArray();
+
+                } else {
+                    int finalMode1 = mode;
+                    if (mode != 0) {
+                        arrayTo.get(mode-1).stream().filter(v -> !v.modified).forEach(v -> {
+                            arrayTo.get(finalMode1).add(v);
+                        });
+                        for (int i = 0; i < seedToLocation[mode].length; i++) {
+                            if (seedToLocation[mode][i] == -1) {
+                                seedToLocation[mode][i] = seedToLocation[mode - 1][i];
+                            }
+                        }
+                    }
+                    mode++;
+                }
+            } else {
+                String[] num = data.trim().split(" ");
+//                System.out.println(Arrays.toString(num));
+                long id = Long.parseLong(num[0]);
+                long min = Long.parseLong(num[1]);
+                long range = Long.parseLong(num[2]);
+                long max = min + range - 1;
+                int finalMode = mode -1;
+                ArrayTo element = new ArrayTo(id,min,range);
+                // Part 2
+                ArrayList<ArrayTo> toAdd = new ArrayList<>();
+                arrayTo.get(finalMode).stream().filter(v -> v.contains(min,max)).forEach(v -> {
+//                    System.out.println(v + " " + min + " " + max + " " + v.contains(min,max));
+                    System.err.println(Arrays.toString(num));
+                    System.err.println(v);
+                    if (element.start >= v.value && element.start <= v.value + v.size - 1) {
+                        long value = element.value;
+                        long start = element.start;
+                        if (element.end >= v.value+v.size-1) {
+                            //A
+                            v.modified = true;
+                            long size = v.value + v.size - 1 - element.start;
+                            toAdd.add(new ArrayTo(value,start,size));
+                            if (size > v.size) throw new RuntimeException("A");
+//                            toAdd.add(new ArrayTo(v.value,v.start,start-v.value+1));
+                            System.err.println(value + " " + start + " " + size);
+
+                        } else {
+                            //B
+                            v.modified = true;
+                            long size = element.size;
+                            if (size > v.size) throw new RuntimeException("A");
+                            toAdd.add(new ArrayTo(value,start,size));
+//                            toAdd.add(new ArrayTo(v.value,v.start,start-v.value+1));
+//                            if (v.value+v.size-1 > element.end) {
+//                                toAdd.add(new ArrayTo(element.end + 1, element.end, v.value + v.size - 1 - element.end));
+//                            }
+                            System.err.println(value + " " + start + " " + size);
+
+                        }
+                    } else if (element.start <= v.value && element.end >= v.value) {
+                        long value = v.value + element.valueAtZero;
+                        long start = v.value;
+                        if (element.end >= v.value+v.size-1) {
+                            //C
+                            v.modified = true;
+                            System.err.println("C");
+                            long size = v.size;
+                            toAdd.add(new ArrayTo(value,start,size));
+                            System.err.println(value + " " + start + " " + size);
+
+                        } else {
+                            //D
+                            v.modified = true;
+                            System.err.println("D");
+                            long size = element.end - v.value + 1;
+                            if (size > v.size) throw new RuntimeException("A");
+                            toAdd.add(new ArrayTo(value,start,size));
+//                            if (v.value+v.size-1 > element.end) {
+//                                toAdd.add(new ArrayTo(v.value+size,element.end+1,v.value+v.size- element.end));
+//                            }
+                            System.err.println(value + " " + start + " " + size);
+
+                        }
+                    } 
+/*
+                    if (v.contains(min, max)) {
+                        if (v.value <= element.start && v.value + v.size - 1 >= element.end) {
+                            System.err.println("A");
+                            v.modified = true;
+                            long value = v.value+element.valueAtZero;
+                            long start = v.value;
+                            long size = v.size;
+                            toAdd.add(new ArrayTo(value,start,size));
+                            System.err.println(value + " " + start + " " + size);
+                        } else if (v.value <= element.start && v.value+v.size-1 >= element.start) {
+                            System.err.println("B");
+                            v.modified = true;
+                            long value = v.value+element.valueAtZero;
+                            long start = v.value;
+                            long size = element.end-v.value;
+                            toAdd.add(new ArrayTo(value,start,size));
+                            System.err.println(value + " " + start + " " + size);
+                        } else if (v.value + v.size - 1 >= element.end && v.value <= element.end) {
+                            System.err.println("C");
+                            v.modified = true;
+                            long value = v.start-element.start+ element.value;
+                            long start = element.start;
+                            long size = v.size-element.start+v.value;
+                            toAdd.add(new ArrayTo(value,start,size));
+                            System.err.println(value + " " + start + " " + size);
+                        } else {
+                            System.err.println("MAtch not found");
+                        }
+*/
+/*
+                        if (v.value >= min && v.value+v.size-1 <= max) {
+                        System.err.println(1);
+                            v.modified = true;
+                            long value = v.value+element.valueAtZero;
+                            long start = v.value;
+                            long size = v.size;
+                            toAdd.add(new ArrayTo(value,start,size));
+                            System.err.println(value + " " + start + " " + size);
+                        } else if (v.value >= min && v.value <= element.end) {
+                            v.modified = true;
+                            long value = v.value+element.valueAtZero;
+                            long start = v.value;
+                            long size = element.end-v.value;
+                            toAdd.add(new ArrayTo(value,start,size));
+                            System.err.println(2);
+                            System.err.println(value + " " + start + " " + size);
+                        } else if (v.value+v.size -1 <= max && v.value+v.size-1 >= element.start) {
+                            v.modified = true;
+                            long value = v.start-element.start+ element.value;
+                            long start = element.start;
+                            long size = v.size-element.start+v.value;
+                            System.err.println(3);
+                            toAdd.add(new ArrayTo(value,start,size));
+                            System.err.println(value + " " + start + " " + size);
+                        } else {
+//                            System.err.println(4);
+                        }
+*/
+
+//                    toAdd.add(new ArrayTo(v.value,v.start,v.size));
+                });
+                if (arrayTo.size() == mode) {
+                    arrayTo.add(toAdd);
+                } else {
+                    arrayTo.getLast().addAll(toAdd);
+                }
+//                System.out.println(toAdd);
+
+
+                // Part 1
+                Arrays.stream(seedToLocation[finalMode]).forEach(longs -> {
+                    if (longs <= max && longs >= min) {
+                        long prevId = LongStream.range(0, seedToLocation[finalMode].length).filter(i -> seedToLocation[finalMode][(int) i] == longs).findFirst().orElse(-1);
+//                        System.out.println(prevId);
+                        if (prevId == -1) return;
+                        long diff = id - min;
+                        long value = longs + diff;
+                        seedToLocation[finalMode +1][(int) prevId] = value;
+                    }
+                });
+            }
+        }
+        for (int i = 0; i < seedToLocation[mode].length; i++) {
+            if (seedToLocation[mode][i] == -1) {
+                seedToLocation[mode][i] = seedToLocation[mode-1][i];
+            }
+        }
+//        System.out.println(Arrays.stream(seedToLocation[mode]).min().orElse(-1L));
+//        System.out.println(Arrays.deepToString(seedToLocation));
+//        System.out.println(arrayTo);
+        System.out.println(arrayTo.get(mode).stream().mapToLong(v -> v.value).min());
+        System.out.println(Arrays.toString(arrayTo.stream().mapToLong(v -> v.stream().mapToLong(w -> w.size).sum()).toArray()));
+//        System.out.println(arrayTo.get(1).stream().mapToLong(w -> w.size).sum());
+    }
+    public static class ArrayTo {
+        long value;
+        long start;
+        long size;
+        long end;
+        boolean modified;
+        long valueAtZero;
+        ArrayTo(long value, long start, long size) {
+            this.value = value;
+            this.start = start;
+            this.size = size;
+            this.end = start + size - 1;
+            this.valueAtZero = value - start;
+        }
+        public boolean contains(long min, long max) {
+            return (value >= min || value+size-1 <= max);
+        }
+
+        @Override
+        public String toString() {
+            return "ArrayTo{" +
+                    "value=" + value +
+                    ", start=" + start +
+                    ", size=" + size +
+                    ", end=" + end +
+                    '}';
+        }
+
+        public void setStart(long start) {
+            this.start = start;
+        }
+
+        public void setEnd(long end) {
+            this.end = end;
+        }
+    }
+
     private static void day4() {
         long score = 0;
         ArrayList<Integer> machesArr = new ArrayList<>();
