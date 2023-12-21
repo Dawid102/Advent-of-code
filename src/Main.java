@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -12,7 +13,115 @@ public class Main {
 //        day3();
 //        day4();
 //        day5(); TODO:
-        day6();
+//        day6();
+        day7();
+    }
+
+    private static void day7() {
+        Scanner day7 = getScanner("input/day_7.txt");
+        TreeMap<Long, Hand> treeMap = new TreeMap<>();
+//        ArrayList<Hand> arrayList = new ArrayList<>();
+        while (day7.hasNext()) {
+            String[] data = day7.nextLine().split(" ");
+            int bid = Integer.parseInt(data[1]);
+            String hand = data[0];
+            Hand hand1 = new Hand(hand,bid);
+//            System.out.println(hand1);
+//            arrayList.add(hand1);
+            treeMap.put(hand1.sortValue, hand1);
+        }
+        System.out.println(treeMap);
+        var bids = treeMap.values().stream().mapToLong(v -> v.bid).toArray();
+        long sumBids = 0;
+        for (int i = 0; i < bids.length; i++) {
+            sumBids += bids[i] * (i+1);
+        }
+        System.out.println(sumBids);
+    }
+
+    public static class Hand implements Comparable<Hand> {
+        @Override
+        public String toString() {
+            return "Hand{" +
+                    "cards=" + Arrays.toString(cards) +
+                    ", bid=" + bid +
+                    ", handType=" + handType +
+                    '}';
+        }
+
+        Cards[] cards = new Cards[5];
+        int bid;
+        long sortValue;
+        HandType handType;
+        Hand(String hand, int bid) {
+            this.bid = bid;
+            this.cards = getCards(hand);
+            this.handType = getHandType();
+            this.sortValue = sortValue();
+        }
+
+        public Cards[] getCards(String in) {
+            Cards[] cards = new Cards[5];
+            for (int i = 0; i < in.strip().toCharArray().length; i++) {
+                cards[i] = Cards.fromChar(in.strip().toCharArray()[i]);
+            }
+            return cards;
+        }
+        public HandType getHandType() {
+            HashMap<Cards, Integer> hashMap = new HashMap<>();
+            for (Cards card : cards) {
+                    hashMap.merge(card, 1, Integer::sum);
+            }
+            return switch (hashMap.values().size()) {
+                case 1 -> HandType.Five;
+                // Four or FullHouse
+                case 2 -> {
+                    yield hashMap.values().contains(4) ? HandType.Four : HandType.FullHouse;
+                }
+                // ThreeOfAKind or TwoPair
+                case 3  -> {
+                    yield hashMap.values().contains(3) ? HandType.ThreeOfAKind : HandType.TwoPair;
+                }
+                case 4 -> HandType.OnePair;
+                case 5 -> HandType.HighCard;
+                default -> null;
+            };
+        };
+
+        @Override
+        public int compareTo(Hand hand) {
+            if (this.handType.ordinal() < hand.handType.ordinal()) return 1;
+            else if (this.handType.ordinal() > hand.handType.ordinal()) return -1;
+            for (int i = 0; i < 5; i++) {
+                if (cards[i].ordinal() > hand.cards[i].ordinal()) return 1;
+                if (cards[i].ordinal() < hand.cards[i].ordinal()) return -1;
+            }
+            return 0;
+        }
+        public long sortValue() {
+            long value = 0;
+            for (int i = 0; i < 5; i++) {
+                value += (long) (cards[i].ordinal()*(Math.pow(Cards.len,(5-i))));
+            }
+            value += (6-handType.ordinal())*5_000_000;
+            return value;
+        }
+    }
+    public enum HandType {Five,Four,FullHouse,ThreeOfAKind,TwoPair,OnePair,HighCard};
+    public enum Cards {
+        TWO('2'),THREE('3'),FOUR('4'),FIVE('5'),SIX('6'),SEVEN('7'),EIGHT('8'),NINE('9'),
+        TEN('T'),JACK('J'),QUEEN('Q'),KING('K'),ACE('A');
+        final char c;
+        static final int len = Cards.values().length;
+        Cards(char c) {
+            this.c = c;
+        }
+        public static Cards fromChar(char a) {
+            for (Cards value : Cards.values()) {
+                if (a == value.c) return value;
+            }
+            throw new IllegalArgumentException();
+        }
     }
 
     private static void day6() {
